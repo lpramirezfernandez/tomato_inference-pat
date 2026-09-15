@@ -1,0 +1,53 @@
+name: Build Android APK
+
+# Runs whenever you push to main/master, or manually from the
+# "Actions" tab on GitHub ("Run workflow" button).
+on:
+  push:
+    branches: [main, master]
+  workflow_dispatch: {}
+
+jobs:
+  build:
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Check out the repo
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            build-essential git unzip openjdk-17-jdk \
+            zlib1g-dev libncurses5-dev libncursesw5-dev libtinfo5 cmake \
+            autoconf libtool pkg-config zip
+
+      - name: Install buildozer
+        run: |
+          pip install --upgrade pip
+          pip install buildozer cython
+
+      # Speeds up re-runs a lot: Buildozer downloads the whole Android
+      # SDK/NDK the first time, which is slow.
+      - name: Cache Buildozer global directory
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.buildozer
+            .buildozer
+          key: buildozer-${{ hashFiles('buildozer.spec') }}
+
+      - name: Build APK (debug)
+        run: |
+          yes | buildozer -v android debug
+
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: tomato-inference-apk
+          path: bin/*.apk

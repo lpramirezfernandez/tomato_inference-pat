@@ -1,0 +1,7 @@
+kivy>=2.3.0
+opencv-python
+numpy
+python-dotenv
+inference-sdk
+plyer
+requests
